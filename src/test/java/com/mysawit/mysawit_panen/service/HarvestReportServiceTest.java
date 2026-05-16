@@ -42,7 +42,7 @@ public class HarvestReportServiceTest {
         reportId = UUID.randomUUID();
 
         validRequest = HarvestReportRequest.builder()
-                .weightInKg(100.0)
+                .weight(100.0)
                 .description("Panen Blok A")
                 .photoUrls(List.of("url1"))
                 .build();
@@ -121,6 +121,6 @@ public class HarvestReportServiceTest {
         pendingReport.setStatus(HarvestStatus.APPROVED);
         when(repository.findById(reportId)).thenReturn(pendingReport);
 
-        assertThrows(InvalidAttributeValueException.class, () -> service.approveReport(mandorId, reportId));
+        assertThrows(IllegalArgumentException.class, () -> service.approveReport(mandorId, reportId));
     }
 }

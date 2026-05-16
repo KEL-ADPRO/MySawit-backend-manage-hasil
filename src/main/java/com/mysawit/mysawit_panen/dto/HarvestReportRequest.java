@@ -12,7 +12,7 @@ import java.util.List;
 public class HarvestReportRequest {
     @NotNull(message = "Weight is mandatory")
     @Min(value = 0, message = "Weight must be positive")
-    private Double weightInKg;
+    private Double weight;
 
     private String description;
 
