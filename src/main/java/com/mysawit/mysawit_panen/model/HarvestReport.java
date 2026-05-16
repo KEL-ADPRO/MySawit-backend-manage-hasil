@@ -22,7 +22,7 @@ public class HarvestReport {
     @Column(nullable = false)
     private Double weight;
 
-    @Column(columnDefinition = "TEXT")
+    @Column()
     private String description;
 
     @Enumerated(EnumType.STRING)
