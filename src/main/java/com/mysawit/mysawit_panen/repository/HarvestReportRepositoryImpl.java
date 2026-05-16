@@ -69,8 +69,7 @@ public class HarvestReportRepositoryImpl implements HarvestReportRepository {
             queryBuilder.append(" AND h.status = :status");
         }
 
-        TypedQuery<HarvestReport> query = entityManager.createQuery(queryBuilder.toString(), HarvestReport.class)
-                .setParameter("buruhId", buruhId);
+        TypedQuery<HarvestReport> query = entityManager.createQuery(queryBuilder.toString(), HarvestReport.class).setParameter("buruhId", buruhId);
 
         if (startDate != null && endDate != null) {
             query.setParameter("startDate", startDate);
