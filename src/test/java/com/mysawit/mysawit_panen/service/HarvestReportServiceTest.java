@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.management.InvalidAttributeValueException;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -25,6 +24,9 @@ import static org.mockito.Mockito.*;
 public class HarvestReportServiceTest {
     @Mock
     private HarvestReportRepository repository;
+
+    @Mock
+    private PayrollEventPublisher payrollEventPublisher;
 
     @InjectMocks
     private HarvestReportServiceImpl service;
@@ -90,6 +92,7 @@ public class HarvestReportServiceTest {
 
         assertEquals(HarvestStatus.APPROVED, response.getStatus());
         assertEquals(mandorId, response.getMandorId());
+        verify(payrollEventPublisher).publishHarvestApprovedEvent(pendingReport);
     }
 
     @Test
