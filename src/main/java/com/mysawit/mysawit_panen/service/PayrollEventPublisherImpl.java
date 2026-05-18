@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PayrollEeventPublisherImpl implements PayrollEventPublisher{
+public class PayrollEventPublisherImpl implements PayrollEventPublisher{
     private final PayrollClient pembayaranClient;
 
     @Override
