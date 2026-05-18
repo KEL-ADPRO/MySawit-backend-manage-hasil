@@ -17,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class HarvestReportServiceImpl implements HarvestReportService {
     private final HarvestReportRepository repository;
+    private final PayrollEventPublisher payrollEventPublisher;
 
     @Override
     @Transactional
@@ -53,7 +54,7 @@ public class HarvestReportServiceImpl implements HarvestReportService {
         report.setMandorId(mandorId);
 
         final HarvestReport savedReport = repository.save(report);
-
+        payrollEventPublisher.publishHarvestApprovedEvent(savedReport);
         return mapToResponse(savedReport);
     }
 
