@@ -38,3 +38,9 @@ out/
 
 ### Security ###
 application.properties
+.env
+*.env
+
+.java-version
+
+/src/main/resources/templates/
