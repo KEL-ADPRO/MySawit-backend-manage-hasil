@@ -15,7 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.io.FileNotFoundException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,20 +56,21 @@ public class HarvestReportControllerTest {
         reportIdStr = reportId.toString();
 
         validSubmitRequest = HarvestReportRequest.builder()
-                .weight(150.0)
+                .weight(100.0)
                 .description("Panen Blok A")
                 .photoUrls(List.of("url1"))
                 .build();
 
         validRejectRequest = ApprovalRequest.builder()
-                .rejectionReason("Kualitas buah buruk")
+                .rejectionReason("Kualitas buruk!")
                 .build();
 
         pendingResponse = HarvestReportResponse.builder()
                 .id(reportId)
-                .weight(150.0)
+                .weight(100.0)
                 .status(HarvestStatus.PENDING)
                 .buruhId(buruhId)
+                .date(LocalDate.now())
                 .build();
 
         approvedResponse = HarvestReportResponse.builder()
@@ -81,7 +82,7 @@ public class HarvestReportControllerTest {
         rejectedResponse = HarvestReportResponse.builder()
                 .id(reportId)
                 .status(HarvestStatus.REJECTED)
-                .rejectionReason("Kualitas buah buruk")
+                .rejectionReason("Kualitas buruk!")
                 .mandorId(mandorId)
                 .build();
     }
@@ -113,7 +114,7 @@ public class HarvestReportControllerTest {
         assertNotNull(result.getBody());
         assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
         assertFalse(result.getBody().isSuccess());
-        assertEquals("Buruh has already submitted a harvest report for today.", result.getBody().getMessage());
+        assertEquals("Existing report found!", result.getBody().getMessage());
     }
 
     @Test
@@ -146,14 +147,14 @@ public class HarvestReportControllerTest {
 
     @Test
     void approveReport_Fails_WhenStatusInvalid() {
-        when(harvestReportService.approveReport(mandorId, reportId)).thenThrow(new IllegalArgumentException("Only pending reports can be approved."));
+        when(harvestReportService.approveReport(mandorId, reportId)).thenThrow(new IllegalArgumentException("Only pending reports can be approved!"));
 
         final ResponseEntity<ApiResponse<HarvestReportResponse>> result = harvestReportController.approveReport(mandorIdStr, reportIdStr);
 
         assertNotNull(result.getBody());
         assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
         assertFalse(result.getBody().isSuccess());
-        assertEquals("Only pending reports can be approved.", result.getBody().getMessage());
+        assertEquals("Only pending reports can be approved!", result.getBody().getMessage());
     }
 
     @Test
@@ -169,18 +170,18 @@ public class HarvestReportControllerTest {
 
         final HarvestReportResponse data = result.getBody().getData();
         assertEquals(HarvestStatus.REJECTED, data.getStatus());
-        assertEquals("Kualitas buah buruk", data.getRejectionReason());
+        assertEquals("Kualitas buruk!", data.getRejectionReason());
     }
 
     @Test
     void rejectReport_Fails_WhenNotFound() {
-        when(harvestReportService.rejectReport(mandorId, reportId, validRejectRequest)).thenThrow(new FileNotFoundException("Harvest report not found."));
+        when(harvestReportService.rejectReport(mandorId, reportId, validRejectRequest)).thenThrow(new IllegalArgumentException("Harvest report not found!"));
 
         final ResponseEntity<ApiResponse<HarvestReportResponse>> result = harvestReportController.rejectReport(mandorIdStr, reportIdStr, validRejectRequest);
 
         assertNotNull(result.getBody());
         assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
         assertFalse(result.getBody().isSuccess());
-        assertEquals("Harvest report not found.", result.getBody().getMessage());
+        assertEquals("Harvest report not found!", result.getBody().getMessage());
     }
 }
