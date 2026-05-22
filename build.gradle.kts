@@ -1,3 +1,6 @@
+import com.google.protobuf.gradle.id
+import com.google.protobuf.gradle.protobuf
+
 plugins {
 	java
 	jacoco
@@ -5,6 +8,7 @@ plugins {
 	id("org.springframework.boot") version "3.5.10"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("org.sonarqube") version "4.4.1.3373"
+	id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.mysawit"
@@ -37,6 +41,17 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("com.h2database:h2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	testImplementation("org.springframework.security:spring-security-test")
+	implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+
+	implementation("net.devh:grpc-server-spring-boot-starter:3.0.0.RELEASE")
+	implementation("io.grpc:grpc-protobuf:1.62.2")
+	implementation("io.grpc:grpc-stub:1.62.2")
+	compileOnly("org.apache.tomcat:annotations-api:6.0.53")
 }
 
 sonar {
@@ -65,4 +80,22 @@ tasks.test {
 
 tasks.jacocoTestReport{
 	dependsOn(tasks.test)
+}
+
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:3.25.3"
+	}
+	plugins {
+		id("grpc") {
+			artifact = "io.grpc:protoc-gen-grpc-java:1.62.2"
+		}
+	}
+	generateProtoTasks {
+		all().forEach {
+			it.plugins {
+				id("grpc") { }
+			}
+		}
+	}
 }
