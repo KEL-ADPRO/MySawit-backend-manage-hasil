@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package harvest;
+
+option java_multiple_files = true;
+option java_package = "com.mysawit.mysawit_panen.grpc";
+option java_outer_classname = "HarvestReportProto";
+
+service HarvestReportGrpcService {
+    rpc GetReportStatus (ReportStatusRequest) returns (ReportStatusResponse);
+}
+
+message ReportStatusRequest {
+    string report_id = 1;
+}
+
+message ReportStatusResponse {
+    string id = 1;
+    string status = 2;
+    double weight = 3;
+    string buruh_id = 4;
+}
