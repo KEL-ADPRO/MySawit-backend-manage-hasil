@@ -55,6 +55,7 @@ jobs:
               -e NEON_DB_USERNAME="${{ secrets.NEON_DB_USERNAME }}" \
               -e NEON_DB_PASSWORD="${{ secrets.NEON_DB_PASSWORD }}" \
               -e PEMBAYARAN_BASE_URL="${{ secrets.PEMBAYARAN_BASE_URL }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
             
             sleep 15
@@ -66,14 +67,3 @@ jobs:
             fi
 
             sudo docker system prune -af
-            
-            cd ~/MySawit-backend-manage-hasil
-            git checkout main
-            git reset --hard HEAD
-            git clean -fd
-            git pull origin main
-            
-            if [ -f "docker-compose.yml" ]; then
-                sudo docker-compose down || true
-                sudo docker-compose up -d
-            fi
