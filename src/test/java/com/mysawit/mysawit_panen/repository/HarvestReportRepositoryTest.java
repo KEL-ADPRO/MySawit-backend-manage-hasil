@@ -160,4 +160,16 @@ public class HarvestReportRepositoryTest {
         assertEquals(1, result.size());
         assertEquals(HarvestStatus.PENDING, result.getFirst().getStatus());
     }
+
+    @Test
+    void findFiltered_MandorGeneralView() {
+        when(entityManager.createQuery(any(String.class), eq(HarvestReport.class))).thenReturn(typedQuery);
+        when(typedQuery.setParameter("status", HarvestStatus.PENDING)).thenReturn(typedQuery);
+        when(typedQuery.getResultList()).thenReturn(List.of(pendingReport));
+
+        final List<HarvestReport> result = repository.findFiltered(null, null, null, HarvestStatus.PENDING);
+
+        assertEquals(1, result.size());
+        assertEquals(HarvestStatus.PENDING, result.getFirst().getStatus());
+    }
 }
