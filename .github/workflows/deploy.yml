@@ -1,9 +1,9 @@
-name: Continuous Deployment (Production)
+name: Continuous Deployment
 
 on:
   push:
     branches:
-      - main
+      - staging
 
 jobs:
   build-and-push:
@@ -55,12 +55,10 @@ jobs:
               -e NEON_DB_USERNAME="${{ secrets.NEON_DB_USERNAME }}" \
               -e NEON_DB_PASSWORD="${{ secrets.NEON_DB_PASSWORD }}" \
               -e PEMBAYARAN_BASE_URL="${{ secrets.PEMBAYARAN_BASE_URL }}" \
-              -e JAVA_TOOL_OPTIONS="-Xmx256m -Xms256m" \
               ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
             
             sleep 15
             
-            # Check if the container is still running
             if [ "$(sudo docker inspect -f '{{.State.Running}}' hasil-app)" = "false" ]; then
                 echo "CRITICAL: hasil-app crashed immediately after starting!"
                 sudo docker logs hasil-app
@@ -69,16 +67,13 @@ jobs:
 
             sudo docker system prune -af
             
-            # Keep codebase configurations on VPS in sync with GitHub
             cd ~/MySawit-backend-manage-hasil
             git checkout main
             git reset --hard HEAD
             git clean -fd
             git pull origin main
             
-            # Restart telemetry if docker-compose file is present
             if [ -f "docker-compose.yml" ]; then
                 sudo docker-compose down || true
                 sudo docker-compose up -d
             fi
-            # End of deployment workflow
