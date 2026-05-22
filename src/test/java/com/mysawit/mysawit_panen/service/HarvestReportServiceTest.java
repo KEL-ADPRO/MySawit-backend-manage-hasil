@@ -130,6 +130,35 @@ public class HarvestReportServiceTest {
     }
 
     @Test
+    void approveReport_Fails_WhenStatusIsRejected() {
+        pendingReport.setStatus(HarvestStatus.REJECTED);
+        when(repository.findById(reportId)).thenReturn(pendingReport);
+
+        final Exception e = assertThrows(IllegalArgumentException.class, () -> service.approveReport(mandorId, reportId));
+        assertEquals("Only pending reports can be approved.", e.getMessage());
+    }
+
+    @Test
+    void rejectReport_Fails_WhenStatusIsApproved() {
+        final ApprovalRequest request = new ApprovalRequest("Salah reject!");
+        pendingReport.setStatus(HarvestStatus.APPROVED);
+        when(repository.findById(reportId)).thenReturn(pendingReport);
+
+        final Exception e = assertThrows(IllegalArgumentException.class, () -> service.rejectReport(mandorId, reportId, request));
+        assertEquals("Only pending reports can be rejected!", e.getMessage());
+    }
+
+    @Test
+    void rejectReport_Fails_WhenStatusIsRejected() {
+        final ApprovalRequest request = new ApprovalRequest("Salah reject!");
+        pendingReport.setStatus(HarvestStatus.REJECTED);
+        when(repository.findById(reportId)).thenReturn(pendingReport);
+
+        final Exception e = assertThrows(IllegalArgumentException.class, () -> service.rejectReport(mandorId, reportId, request));
+        assertEquals("Only pending reports can be rejected!", e.getMessage());
+    }
+
+    @Test
     void getReportById_Success() {
         when(repository.findById(reportId)).thenReturn(pendingReport);
 
