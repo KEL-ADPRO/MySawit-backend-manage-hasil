@@ -44,8 +44,7 @@ jobs:
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
             
-            sudo docker stop hasil-app || true
-            sudo docker rm hasil-app || true
+            sudo docker rm -f hasil-app || true
             
             sudo docker run -d \
               --name hasil-app \
