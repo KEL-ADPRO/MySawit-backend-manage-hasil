@@ -1,0 +1,84 @@
+name: Continuous Deployment (Production)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
+            ${{ secrets.DOCKER_USERNAME }}/hasil-service:${{ github.sha }}
+
+  deploy-to-aws:
+    name: Deploy to AWS Academy EC2
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH into AWS and Deploy
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
+            
+            sudo docker stop hasil-app || true
+            sudo docker rm hasil-app || true
+            
+            sudo docker run -d \
+              --name hasil-app \
+              -p 8083:8083 \
+              -p 9093:9093 \
+              -e NEON_DB_URL="${{ secrets.NEON_DB_URL }}" \
+              -e NEON_DB_USERNAME="${{ secrets.NEON_DB_USERNAME }}" \
+              -e NEON_DB_PASSWORD="${{ secrets.NEON_DB_PASSWORD }}" \
+              -e PEMBAYARAN_BASE_URL="${{ secrets.PEMBAYARAN_BASE_URL }}" \
+              -e JAVA_TOOL_OPTIONS="-Xmx256m -Xms256m" \
+              ${{ secrets.DOCKER_USERNAME }}/hasil-service:latest
+            
+            sleep 15
+            
+            # Check if the container is still running
+            if [ "$(sudo docker inspect -f '{{.State.Running}}' hasil-app)" = "false" ]; then
+                echo "CRITICAL: hasil-app crashed immediately after starting!"
+                sudo docker logs hasil-app
+                exit 1
+            fi
+
+            sudo docker system prune -af
+            
+            # Keep codebase configurations on VPS in sync with GitHub
+            cd ~/MySawit-backend-manage-hasil
+            git checkout main
+            git reset --hard HEAD
+            git clean -fd
+            git pull origin main
+            
+            # Restart telemetry if docker-compose file is present
+            if [ -f "docker-compose.yml" ]; then
+                sudo docker-compose down || true
+                sudo docker-compose up -d
+            fi
+            # End of deployment workflow
