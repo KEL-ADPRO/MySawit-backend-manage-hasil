@@ -36,12 +36,14 @@ public class HarvestReportServiceTest {
     private UUID reportId;
     private HarvestReportRequest validRequest;
     private HarvestReport pendingReport;
+    private LocalDate today;
 
     @BeforeEach
     void setUp() {
         buruhId = UUID.randomUUID();
         mandorId = UUID.randomUUID();
         reportId = UUID.randomUUID();
+        today = LocalDate.now();
 
         validRequest = HarvestReportRequest.builder()
                 .weight(100.0)
@@ -125,5 +127,32 @@ public class HarvestReportServiceTest {
         when(repository.findById(reportId)).thenReturn(pendingReport);
 
         assertThrows(IllegalArgumentException.class, () -> service.approveReport(mandorId, reportId));
+    }
+
+    @Test
+    void getReportById_Success() {
+        when(repository.findById(reportId)).thenReturn(pendingReport);
+
+        final HarvestReportResponse response = service.getReportById(reportId);
+
+        assertNotNull(response);
+        assertEquals(reportId, response.getId());
+    }
+
+    @Test
+    void getReportById_NotFound() {
+        when(repository.findById(reportId)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () -> service.getReportById(reportId));
+    }
+
+    @Test
+    void getHistory_Success() {
+        when(repository.findFiltered(buruhId, today, today, HarvestStatus.PENDING)).thenReturn(List.of(pendingReport));
+
+        final List<HarvestReportResponse> result = service.getHistory(buruhId, today, today, HarvestStatus.PENDING);
+
+        assertEquals(1, result.size());
+        assertEquals(reportId, result.getFirst().getId());
     }
 }

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -77,6 +78,17 @@ public class HarvestReportServiceImpl implements HarvestReportService {
 
         final HarvestReport savedReport = repository.save(report);
         return mapToResponse(savedReport);
+    }
+
+    @Override
+    public HarvestReportResponse getReportById(final UUID id) {
+        return mapToResponse(getReportOrThrow(id));
+    }
+
+    @Override
+    public List<HarvestReportResponse> getHistory(final UUID buruhId, final LocalDate startDate, final LocalDate endDate, final HarvestStatus status) {
+        final List<HarvestReport> reports = repository.findFiltered(buruhId, startDate, endDate, status);
+        return reports.stream().map(this::mapToResponse).toList();
     }
 
     private HarvestReport getReportOrThrow(final UUID reportId) {
