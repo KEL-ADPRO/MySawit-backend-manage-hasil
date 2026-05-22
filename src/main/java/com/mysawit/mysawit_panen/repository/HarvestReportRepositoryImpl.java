@@ -60,17 +60,27 @@ public class HarvestReportRepositoryImpl implements HarvestReportRepository {
 
     @Override
     public List<HarvestReport> findFiltered(final UUID buruhId, final LocalDate startDate, final LocalDate endDate, final HarvestStatus status) {
-        StringBuilder queryBuilder = new StringBuilder(SELECT_REPORT + "WHERE h.buruhId = :buruhId");
+        StringBuilder queryBuilder = new StringBuilder(SELECT_REPORT);
+        boolean hasClause = false;
 
+        if (buruhId != null) {
+            queryBuilder.append(hasClause ? " AND" : " WHERE").append(" h.buruhId = :buruhId");
+            hasClause = true;
+        }
         if (startDate != null && endDate != null) {
-            queryBuilder.append(" AND h.harvestDate BETWEEN :startDate AND :endDate");
+            queryBuilder.append(hasClause ? " AND" : " WHERE").append(" h.date BETWEEN :startDate AND :endDate");
+            hasClause = true;
         }
         if (status != null) {
-            queryBuilder.append(" AND h.status = :status");
+            queryBuilder.append(hasClause ? " AND" : " WHERE").append(" h.status = :status");
+            hasClause = true;
         }
 
-        TypedQuery<HarvestReport> query = entityManager.createQuery(queryBuilder.toString(), HarvestReport.class).setParameter("buruhId", buruhId);
+        TypedQuery<HarvestReport> query = entityManager.createQuery(queryBuilder.toString(), HarvestReport.class);
 
+        if (buruhId != null) {
+            query.setParameter("buruhId", buruhId);
+        }
         if (startDate != null && endDate != null) {
             query.setParameter("startDate", startDate);
             query.setParameter("endDate", endDate);

@@ -37,7 +37,6 @@ out/
 .vscode/
 
 ### Security ###
-application.properties
 .env
 *.env
 

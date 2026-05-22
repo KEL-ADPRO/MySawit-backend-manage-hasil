@@ -184,4 +184,97 @@ public class HarvestReportControllerTest {
         assertFalse(result.getBody().isSuccess());
         assertEquals("Harvest report not found!", result.getBody().getMessage());
     }
+
+    @Test
+    void getReportById_Success() {
+        when(harvestReportService.getReportById(reportId)).thenReturn(pendingResponse);
+
+        final ResponseEntity<ApiResponse<HarvestReportResponse>> result = harvestReportController.getReportById(reportIdStr);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("Harvest report retrieved successfully", result.getBody().getMessage());
+        assertEquals(reportId, result.getBody().getData().getId());
+    }
+
+    @Test
+    void getReportById_NotFound() {
+        when(harvestReportService.getReportById(reportId)).thenThrow(new IllegalArgumentException("Harvest report not found!"));
+
+        final ResponseEntity<ApiResponse<HarvestReportResponse>> result = harvestReportController.getReportById(reportIdStr);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Harvest report not found!", result.getBody().getMessage());
+    }
+
+    @Test
+    void getReportById_InvalidFormat() {
+        final ResponseEntity<ApiResponse<HarvestReportResponse>> result = harvestReportController.getReportById("invalid-uuid");
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid Report ID format", result.getBody().getMessage());
+    }
+
+    @Test
+    void getBuruhHistory_Success() {
+        final List<HarvestReportResponse> history = List.of(pendingResponse);
+        when(harvestReportService.getHistory(buruhId, null, null, HarvestStatus.PENDING)).thenReturn(history);
+
+        final ResponseEntity<ApiResponse<List<HarvestReportResponse>>> result = harvestReportController.getBuruhHistory(buruhIdStr, null, null, HarvestStatus.PENDING);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("Buruh harvest history retrieved successfully", result.getBody().getMessage());
+        assertEquals(1, result.getBody().getData().size());
+    }
+
+    @Test
+    void getBuruhHistory_InvalidUUID() {
+        final ResponseEntity<ApiResponse<List<HarvestReportResponse>>> result = harvestReportController.getBuruhHistory("invalid-uuid", null, null, HarvestStatus.PENDING);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid User ID format", result.getBody().getMessage());
+    }
+
+    @Test
+    void getMandorHistory_Success() {
+        final List<HarvestReportResponse> history = List.of(pendingResponse);
+        when(harvestReportService.getHistory(buruhId, null, null, HarvestStatus.PENDING)).thenReturn(history);
+
+        final ResponseEntity<ApiResponse<List<HarvestReportResponse>>> result = harvestReportController.getMandorHistory(mandorIdStr, buruhIdStr, null, null, HarvestStatus.PENDING);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
+        assertTrue(result.getBody().isSuccess());
+        assertEquals("Mandor harvest history retrieved successfully", result.getBody().getMessage());
+        assertEquals(1, result.getBody().getData().size());
+    }
+
+    @Test
+    void getMandorHistory_InvalidMandorUUID() {
+        final ResponseEntity<ApiResponse<List<HarvestReportResponse>>> result = harvestReportController.getMandorHistory("invalid-uuid", buruhIdStr, null, null, HarvestStatus.PENDING);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid Mandor ID format", result.getBody().getMessage());
+    }
+
+    @Test
+    void getMandorHistory_InvalidBuruhUUID() {
+        final ResponseEntity<ApiResponse<List<HarvestReportResponse>>> result = harvestReportController.getMandorHistory(mandorIdStr, "invalid-uuid", null, null, HarvestStatus.PENDING);
+
+        assertNotNull(result.getBody());
+        assertEquals(HttpStatus.BAD_REQUEST, result.getStatusCode());
+        assertFalse(result.getBody().isSuccess());
+        assertEquals("Invalid Buruh ID format", result.getBody().getMessage());
+    }
 }

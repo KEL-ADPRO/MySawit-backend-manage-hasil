@@ -9,8 +9,12 @@ import com.mysawit.mysawit_panen.repository.HarvestReportRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.mysawit.mysawit_panen.state.HarvestContext;
+import com.mysawit.mysawit_panen.state.HarvestReportState;
+import com.mysawit.mysawit_panen.state.StateFactory;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -46,15 +50,10 @@ public class HarvestReportServiceImpl implements HarvestReportService {
     public HarvestReportResponse approveReport(final UUID mandorId, final UUID reportId) {
         final HarvestReport report = getReportOrThrow(reportId);
 
-        if (report.getStatus() != HarvestStatus.PENDING) {
-            throw new IllegalArgumentException("Only pending reports can be approved.");
-        }
-
-        report.setStatus(HarvestStatus.APPROVED);
-        report.setMandorId(mandorId);
+        final HarvestReportState state = StateFactory.getState(report.getStatus());
+        state.approve(new HarvestContext(report, payrollEventPublisher), mandorId);
 
         final HarvestReport savedReport = repository.save(report);
-        payrollEventPublisher.publishHarvestApprovedEvent(savedReport);
         return mapToResponse(savedReport);
     }
 
@@ -63,20 +62,22 @@ public class HarvestReportServiceImpl implements HarvestReportService {
     public HarvestReportResponse rejectReport(final UUID mandorId, final UUID reportId, final ApprovalRequest request) {
         final HarvestReport report = getReportOrThrow(reportId);
 
-        if (report.getStatus() != HarvestStatus.PENDING) {
-            throw new IllegalArgumentException("Only pending reports can be rejected!");
-        }
-
-        if (request.getRejectionReason() == null || request.getRejectionReason().trim().isEmpty()) {
-            throw new IllegalArgumentException("Rejection reason is required!");
-        }
-
-        report.setStatus(HarvestStatus.REJECTED);
-        report.setRejectionReason(request.getRejectionReason());
-        report.setMandorId(mandorId);
+        final HarvestReportState state = StateFactory.getState(report.getStatus());
+        state.reject(new HarvestContext(report, payrollEventPublisher), mandorId, request.getRejectionReason());
 
         final HarvestReport savedReport = repository.save(report);
         return mapToResponse(savedReport);
+    }
+
+    @Override
+    public HarvestReportResponse getReportById(final UUID id) {
+        return mapToResponse(getReportOrThrow(id));
+    }
+
+    @Override
+    public List<HarvestReportResponse> getHistory(final UUID buruhId, final LocalDate startDate, final LocalDate endDate, final HarvestStatus status) {
+        final List<HarvestReport> reports = repository.findFiltered(buruhId, startDate, endDate, status);
+        return reports.stream().map(this::mapToResponse).toList();
     }
 
     private HarvestReport getReportOrThrow(final UUID reportId) {
