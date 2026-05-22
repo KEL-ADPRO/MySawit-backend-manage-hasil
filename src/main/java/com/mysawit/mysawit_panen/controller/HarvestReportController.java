@@ -4,12 +4,16 @@ import com.mysawit.mysawit_panen.dto.ApiResponse;
 import com.mysawit.mysawit_panen.dto.ApprovalRequest;
 import com.mysawit.mysawit_panen.dto.HarvestReportRequest;
 import com.mysawit.mysawit_panen.dto.HarvestReportResponse;
+import com.mysawit.mysawit_panen.model.HarvestStatus;
 import com.mysawit.mysawit_panen.service.HarvestReportService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -53,5 +57,63 @@ public class HarvestReportController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ApiResponse.errorResponse(e.getMessage()));
         }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<HarvestReportResponse>> getReportById(@PathVariable("id") final String idStr) {
+        final UUID id;
+        try {
+            id = UUID.fromString(idStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.errorResponse("Invalid Report ID format"));
+        }
+
+        try {
+            final HarvestReportResponse response = harvestReportService.getReportById(id);
+            return ResponseEntity.ok(ApiResponse.successResponse("Harvest report retrieved successfully", response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.errorResponse(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/buruh")
+    public ResponseEntity<ApiResponse<List<HarvestReportResponse>>> getBuruhHistory(
+            @RequestHeader("X-User-Id") final String buruhIdStr,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate endDate,
+            @RequestParam(value = "status", required = false) final HarvestStatus status) {
+        try {
+            final UUID buruhId = UUID.fromString(buruhIdStr);
+            final List<HarvestReportResponse> response = harvestReportService.getHistory(buruhId, startDate, endDate, status);
+            return ResponseEntity.ok(ApiResponse.successResponse("Buruh harvest history retrieved successfully", response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.errorResponse("Invalid User ID format"));
+        }
+    }
+
+    @GetMapping("/mandor")
+    public ResponseEntity<ApiResponse<List<HarvestReportResponse>>> getMandorHistory(
+            @RequestHeader("X-User-Id") final String mandorIdStr,
+            @RequestParam(value = "buruhId", required = false) final String buruhIdStr,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) final LocalDate endDate,
+            @RequestParam(value = "status", required = false) final HarvestStatus status) {
+        try {
+            UUID.fromString(mandorIdStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.errorResponse("Invalid Mandor ID format"));
+        }
+
+        UUID buruhId = null;
+        if (buruhIdStr != null && !buruhIdStr.trim().isEmpty()) {
+            try {
+                buruhId = UUID.fromString(buruhIdStr);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(ApiResponse.errorResponse("Invalid Buruh ID format"));
+            }
+        }
+
+        final List<HarvestReportResponse> response = harvestReportService.getHistory(buruhId, startDate, endDate, status);
+        return ResponseEntity.ok(ApiResponse.successResponse("Mandor harvest history retrieved successfully", response));
     }
 }
